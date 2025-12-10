@@ -325,6 +325,8 @@ e.g. in the example above, these affect keys other than `caps`.
 | Map all unmapped keys in this layer.
 |===
 
+If a key is not mapped explicitly or through these wildcards, it will be implicitly mapped to a <<transparent-key,transparent key>>.
+
 [[review-of-required-configuration-entries]]
 === Review of required configuration entries
 
@@ -909,11 +911,17 @@ inaccurate with regards to its meaning.
 
 **Description**
 
-If you use a single underscore for a key `+_+` then it acts as a "transparent"
-key in a `+deflayer+`. The behaviour depends if `+_+` is on a base layer or a
-while-held layer. When `+_+` is pressed on the active base layer, the key will
-default to the corresponding `defsrc` key. If `+_+` is pressed on the active
-while-held layer, the base layer's behaviour will activate.
+Kanata maintains a layer stack consisting in order of:
+
+* a stack of temporary layers, where each `layer-while-held` adds one layer on top
+* the base layer, manipulated by `layer-switch`
+* if `delegate-to-first-layer` is enabled: the first layer defined by `deflayer` or `deflayermap`
+* `defsrc`
+
+A single underscore `+_+` acts as a "transparent" key in the current layer.
+It will invoke the action assigned to the same key position on the next layer in the stack.
+
+NOTE: If `delegate-to-first-layer` is enabled and the base layer is currently set to the first defined layer, a transparent key on the base layer will fall through directly to `defsrc`.
 
 [[use-defsrc]]
 === use-defsrc
@@ -1651,20 +1659,22 @@ There is a toggable defcfg option related to `movemouse-accel` - <<movemouse-inh
 
 The action `setmouse` or `set🖱` sets the absolute mouse position.
 
-WARNING: This is only supported in Windows right now.
+WARNING: This is not supported on Linux.
 For an interesting keyboard-centric mouse solution in Linux,
 try looking at
 https://github.com/rvaiya/warpd[warpd].
 
 This list action takes two parameters which are `x` and `y` positions
 of the absolute movement.
-The values go from 0,0 which is the upper-left corner of the screen
-to 65535,65535 which is the lower-right corner of the screen.
-If you have multiple monitors,
-`setmouse` treats them all as a single large screen.
-This can make it a little confusing for how to set the `x, y` values
-to get the positions that you want.
-Experimentation will be needed.
+
+The coordinate system is platform-specific:
+
+* **macOS**: Pixel coordinates. `0,0` is the top-left of the main display,
+  maximum values are your screen resolution (e.g., `1920,1080`).
+* **Windows**: Normalized coordinates from `0,0` (top-left)
+  to `65535,65535` (bottom-right). Multiple monitors are treated as one virtual desktop.
+
+Experimentation will be needed to find the correct values for your setup.
 
 [[mouse-speed]]
 ==== Modify the speed of mouse movements
